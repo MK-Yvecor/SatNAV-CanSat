@@ -26,7 +26,13 @@ void loop() {
   Serial.print("FLASH SIZE [MB]: ");
   Serial.println(FLASH_SIZE / 1024 / 1024);
 
+   Serial.println("-=-=-=-=-=-=-=-=-=-=-=-=");
+  
+  Serial.print("CPU Frequency [MHz]: ");
+  Serial.println(ESP.getCpuFreqMHz());
+
   Serial.println("-=-=-=-=-=-=-=-=-=-=-=-=");
+
 
   delay(1000);
 }
