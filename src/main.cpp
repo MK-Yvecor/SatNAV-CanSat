@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <math.h>
 #include <Adafruit_NeoPixel.h>
+#include "I2C_Sensors.h"
 
 #define LED_PIN 12
 #define LED_COUNT 1
