@@ -1,5 +1,12 @@
 #include <Arduino.h>
 #include <math.h>
+#include <Adafruit_NeoPixel.h>
+#include "I2C_Sensors.h"
+
+#define LED_PIN 12
+#define LED_COUNT 1
+
+Adafruit_NeoPixel WS2812B(LED_COUNT, LED_PIN, NEO_GRBW + NEO_KHZ800);
 // Open serial port at baud rate 115200 to check if the coms are working properly
 
 float PSRAM_SIZE;
@@ -8,10 +15,15 @@ float FLASH_SIZE;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+  WS2812B.begin();
+
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  delay(1000);
+  WS2812B.setPixelColor(0,0,0,50);
+  WS2812B.show();
   PSRAM_SIZE = ESP.getPsramSize();
   Serial.print("PSRAM SIZE [KB]: ");
   Serial.println(PSRAM_SIZE / 1024);
@@ -32,7 +44,12 @@ void loop() {
   Serial.println(ESP.getCpuFreqMHz());
 
   Serial.println("-=-=-=-=-=-=-=-=-=-=-=-=");
-
-
   delay(1000);
+<<<<<<< HEAD
 }
+=======
+  WS2812B.setPixelColor(0,0,0,0);
+  WS2812B.show();
+  
+}
+>>>>>>> 97d829c6b27cb524b4b630c68fa77051c6b7e481
