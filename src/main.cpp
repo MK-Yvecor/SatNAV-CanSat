@@ -45,11 +45,5 @@ void loop() {
 
   Serial.println("-=-=-=-=-=-=-=-=-=-=-=-=");
   delay(1000);
-<<<<<<< HEAD
-}
-=======
-  WS2812B.setPixelColor(0,0,0,0);
-  WS2812B.show();
   
 }
->>>>>>> 97d829c6b27cb524b4b630c68fa77051c6b7e481
