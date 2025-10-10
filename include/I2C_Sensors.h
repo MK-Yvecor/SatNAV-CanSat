@@ -11,20 +11,24 @@ namespace I2C_Sensors{
     class INA219 {
 
     public:
-    INA219(uint8_t addr_, int ShuntRegisterValue);
+    INA219(uint8_t addr_, float ResitorValue, float MaxExpectedCurrent);
     bool Init();
     bool ConfigureSensor();
     uint16_t readByte(uint8_t regAddress);
     uint16_t writeByte(uint8_t regAddress);
     float readShuntVoltage();
     float readBusVoltage();
-    float readCurrent_mA();
-    float readPower_mW();
+    float readCurrent();
+    float readPower();
 
     private:
     uint8_t INA_addr;
     //Expressed in Ohms
-    int ShuntResistorValue_;
+    float ResistorValue_;
+    //Expressed in Amps
+    float MaxExpectedCurrent_;
+    //
+    float Current_LSB;
 };
 
 }
