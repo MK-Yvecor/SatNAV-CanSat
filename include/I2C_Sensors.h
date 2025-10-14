@@ -8,12 +8,17 @@
 #define INA219_ADDR 0x40
 
 namespace I2C_Sensors{
+    //Class for INA219 measurements
     class INA219 {
 
     public:
+    // INA219 class constructor
     INA219(uint8_t addr_, float ResitorValue, float MaxExpectedCurrent);
+    //Initialization check
     bool Init();
+    //Writes all needed values to the configuration register
     bool ConfigureSensor();
+    // Universal function to read 2 bytes of incoming data from the sensor
     uint16_t readByte(uint8_t regAddress);
     uint16_t writeByte(uint8_t regAddress);
     float readShuntVoltage();
@@ -27,7 +32,7 @@ namespace I2C_Sensors{
     float ResistorValue_;
     //Expressed in Amps
     float MaxExpectedCurrent_;
-    //
+    //Current LSB value
     float Current_LSB;
 };
 

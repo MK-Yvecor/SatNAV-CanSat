@@ -55,7 +55,6 @@ void loop() {
   Serial.println(FLASH_SIZE / 1024 / 1024);
   Serial.print("CPU Frequency [MHz]: ");
   Serial.println(ESP.getCpuFreqMHz());
-
   Serial.println("-=-=-=-=-=-=-=-=-=-=-=-=");
 
   Serial.print("Voltage [V]: ");

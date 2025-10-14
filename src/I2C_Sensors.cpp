@@ -2,12 +2,14 @@
 
 using namespace I2C_Sensors;
 
+// INA219 class constructor
 INA219::INA219(uint8_t addr, float ResitorValue, float MaxExpectedCurrent){
     INA_addr = addr;
     ResistorValue_ = ResitorValue;
     MaxExpectedCurrent_ = MaxExpectedCurrent;
 }
 
+//Initialization check
 bool INA219::Init(){
     Wire.beginTransmission(INA_addr);
     uint8_t errCode = Wire.endTransmission();
@@ -43,6 +45,7 @@ bool INA219::ConfigureSensor(){
     }    
 
 }
+
 uint16_t INA219::readByte(uint8_t regAddress){
 
     uint16_t rawValue;
@@ -70,28 +73,29 @@ uint16_t INA219::readByte(uint8_t regAddress){
 
 /*
 Calculation formulas are available in INA219 datasheet page 12 and 13: https://www.ti.com/lit/ds/symlink/ina219.pdf?ts=1760067833070&ref_url=https%253A%252F%252Fwww.ti.com%252Fproduct%252FINA219
-All values after coversion are expressed in SI units: [V], [V], [A], [W].
+All values after conversion are expressed in SI units: [V], [V], [A], [W].
 */
 
+//result in V
 float INA219::readShuntVoltage(){
     float result = (float)(int16_t)readByte(0x01) * 0.00001f;
     return result;
 }
 
+//Result in volts
 float INA219::readBusVoltage(){
-    //Result in volts
     float result = (float)(readByte(0x02) >> 3) * 0.004f;
     return result;
 }
 
+//result in W
 float INA219::readPower(){
-    //result in 
     float result = (float)readByte(0x03) * Current_LSB * 20.0f;
     return result;
 }
 
+//Result in A
 float INA219::readCurrent(){
-    //Result in A
     float result = (float)(int16_t)readByte(0x04) * Current_LSB;
     return result;
 }
