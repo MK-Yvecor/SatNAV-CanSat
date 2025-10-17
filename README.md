@@ -7,7 +7,7 @@
 
 🚀 SatNAV V.2 - Dedicated flight contoller for CanSat 2025/2026 competition. 🚀
 
-Secification of fligh controller:
+Specification of flight controller:
 - 🖥️ ESP32S3 (FLASH 16MB, 8MB PSRAM QSPI),
 - 🏃 MPU6050 (Gyro, accel),
 - ⚡ INA219 (current consumption sensor),
