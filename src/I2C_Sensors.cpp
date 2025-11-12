@@ -1,6 +1,10 @@
 #include "I2C_Sensors.h"
+#include <Adafruit_BMP280.h>
+
 
 using namespace I2C_Sensors;
+
+Adafruit_BMP280 bmp;
 
 // INA219 class constructor
 INA219::INA219(uint8_t addr, float ResitorValue, float MaxExpectedCurrent){
@@ -8,6 +12,19 @@ INA219::INA219(uint8_t addr, float ResitorValue, float MaxExpectedCurrent){
     ResistorValue_ = ResitorValue;
     MaxExpectedCurrent_ = MaxExpectedCurrent;
 }
+
+// BMP280 class constructor
+class BMP280{
+    public:
+
+        bool Init();
+        float ReadTemperature();
+        float ReadPressure();
+
+    private:
+        uint8_t BMP280_addr = 0x76;
+};
+
 
 //Initialization check
 bool INA219::Init(){
@@ -69,6 +86,28 @@ uint16_t INA219::readByte(uint8_t regAddress){
     rawValue = rawValue | lowerByte;
 
     return rawValue;
+}
+
+bool BMP280::Init(){
+    if (!bmp.begin()) {
+        Serial.println(F("BMP280_INITIALIZATION_ERROR!!!"));
+        return true;
+    }
+    else{
+        Serial.println(F("BMP280_INITIALIZATION_OK!!!"));
+        return false;    
+    }
+
+}
+
+float BMP280::ReadTemperature(){
+    float temperature = bmp.readTemperature();
+    return temperature;
+}
+
+float BMP280::ReadPressure(){
+    float pressure = bmp.readPressure();
+    return pressure;
 }
 
 /*
