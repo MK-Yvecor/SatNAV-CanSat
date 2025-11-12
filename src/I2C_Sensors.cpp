@@ -26,6 +26,7 @@ class BMP280{
         uint8_t BMP280_addr = 0x76;
 };
 
+// MPU6050 class constructor
 class MPU6050{
     public:
 
@@ -107,6 +108,7 @@ uint16_t INA219::readByte(uint8_t regAddress){
     return rawValue;
 }
 
+//BMP280 Initializatio check
 bool BMP280::Init(){
     if (!bmp.begin()) {
         Serial.println(F("BMP280_INITIALIZATION_ERROR!!!"));
@@ -119,6 +121,7 @@ bool BMP280::Init(){
 
 }
 
+//BMP280 read functions
 float BMP280::ReadTemperature(){
     float temperature = bmp.readTemperature();
     return temperature;
@@ -129,6 +132,8 @@ float BMP280::ReadPressure(){
     return pressure;
 }
 
+
+//MPU6050 Initializatio check
 bool MPU6050::Init(){
     if (!mpu.begin()) {
         Serial.println("MPU_INITIALIZATIOM_ERROR");
@@ -140,6 +145,7 @@ bool MPU6050::Init(){
     }
 }
 
+//MPU6050 read functions
 float MPU6050::ReadAccelerationX(){
     sensors_event_t a;
     mpu.getEvent(&a, nullptr, nullptr);
