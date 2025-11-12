@@ -1,10 +1,11 @@
 #include "I2C_Sensors.h"
 #include <Adafruit_BMP280.h>
-
+#include <Adafruit_MPU6050.h>
 
 using namespace I2C_Sensors;
 
 Adafruit_BMP280 bmp;
+Adafruit_MPU6050 mpu;
 
 // INA219 class constructor
 INA219::INA219(uint8_t addr, float ResitorValue, float MaxExpectedCurrent){
@@ -25,6 +26,21 @@ class BMP280{
         uint8_t BMP280_addr = 0x76;
 };
 
+class MPU6050{
+    public:
+
+        bool Init();
+        float ReadAccelerationX();
+        float ReadAccelerationY();
+        float ReadAccelerationZ();
+        float ReadGyroX();
+        float ReadGyroY();
+        float ReadGyroZ();
+
+    private:
+        uint8_t MPU6050_addr = 0x68;
+};
+
 
 //Initialization check
 bool INA219::Init(){
@@ -38,6 +54,9 @@ bool INA219::Init(){
         return false;
     }    
 }
+
+
+
 
 bool INA219::ConfigureSensor(){
     
@@ -91,11 +110,11 @@ uint16_t INA219::readByte(uint8_t regAddress){
 bool BMP280::Init(){
     if (!bmp.begin()) {
         Serial.println(F("BMP280_INITIALIZATION_ERROR!!!"));
-        return true;
+        return false;
     }
     else{
         Serial.println(F("BMP280_INITIALIZATION_OK!!!"));
-        return false;    
+        return true;    
     }
 
 }
@@ -109,6 +128,62 @@ float BMP280::ReadPressure(){
     float pressure = bmp.readPressure();
     return pressure;
 }
+
+bool MPU6050::Init(){
+    if (!mpu.begin()) {
+        Serial.println("MPU_INITIALIZATIOM_ERROR");
+        return false;
+    }
+    else{
+        Serial.println("MPU_INITIALIZATIOM_OK");
+        return true;
+    }
+}
+
+float MPU6050::ReadAccelerationX(){
+    sensors_event_t a;
+    mpu.getEvent(&a, nullptr, nullptr);
+    float accelerationX = a.acceleration.x;
+    return accelerationX;
+}
+
+float MPU6050::ReadAccelerationY(){
+    sensors_event_t a;
+    mpu.getEvent(&a, nullptr, nullptr);
+    float accelerationY = a.acceleration.y;
+    return accelerationY;
+}
+
+float MPU6050::ReadAccelerationZ(){
+    sensors_event_t a;
+    mpu.getEvent(&a, nullptr, nullptr);
+    float accelerationZ = a.acceleration.z;
+    return accelerationZ;
+}
+
+float MPU6050::ReadGyroX(){
+    sensors_event_t g;
+    mpu.getEvent(nullptr, &g, nullptr);
+    float gyroX = g.gyro.x;
+    return gyroX;
+}
+
+float MPU6050::ReadGyroY(){
+    sensors_event_t g;
+    mpu.getEvent(nullptr, &g, nullptr);
+    float gyroY = g.gyro.y;
+    return gyroY;
+}
+
+float MPU6050::ReadGyroZ(){
+    sensors_event_t g;
+    mpu.getEvent(nullptr, &g, nullptr);
+    float gyroZ = g.gyro.z;
+    return gyroZ;
+}
+
+
+
 
 /*
 Calculation formulas are available in INA219 datasheet page 12 and 13: https://www.ti.com/lit/ds/symlink/ina219.pdf?ts=1760067833070&ref_url=https%253A%252F%252Fwww.ti.com%252Fproduct%252FINA219
