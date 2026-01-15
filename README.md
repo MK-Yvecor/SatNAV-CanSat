@@ -2,6 +2,7 @@
 
 - Wojciech Jagiełło,
 - Michał Korbiel,
+- Michał Nowak,
 - Stanisław Trojan,
 - Jan Rybak
 
