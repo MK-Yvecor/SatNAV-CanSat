@@ -100,3 +100,113 @@ float INA219::readCurrent(){
     return result;
 }
 
+
+
+/*
+
+   EX_01 CLASS METHODS
+
+*/
+
+
+void EX_01::i2c_delay() { delayMicroseconds(I2C_DELAY_US); }
+void EX_01::sda_high() { pinMode(SDA, INPUT_PULLUP); }
+void EX_01::sda_low()  { pinMode(SDA, OUTPUT); digitalWrite(SDA, LOW); }
+void EX_01::scl_high() { pinMode(SCL, INPUT_PULLUP); }
+void EX_01::scl_low()  { pinMode(SCL, OUTPUT); digitalWrite(SCL, LOW); }
+
+
+void EX_01::i2c_start() {
+  sda_high(); scl_high(); i2c_delay();
+  sda_low();  i2c_delay();
+  scl_low();
+}
+
+void EX_01::i2c_stop() {
+  sda_low();  scl_high(); i2c_delay();
+  sda_high(); i2c_delay();
+}
+
+
+bool EX_01::i2c_write(uint8_t data) {
+  for (int i = 0; i < 8; i++) {
+    (data & 0x80) ? sda_high() : sda_low();
+    scl_high(); i2c_delay();
+    scl_low();  i2c_delay();
+    data <<= 1;
+  }
+  sda_high();
+  scl_high(); i2c_delay();
+  bool ack = (digitalRead(SDA) == 0);
+  scl_low();
+  return ack;
+}
+
+uint8_t EX_01::i2c_read(bool send_ack) {
+  uint8_t data = 0;
+  sda_high();
+  for (int i = 0; i < 8; i++) {
+    data <<= 1;
+    scl_high(); i2c_delay();
+    if (digitalRead(SDA)) data |= 1;
+    scl_low(); i2c_delay();
+  }
+  send_ack ? sda_low() : sda_high();
+  scl_high(); i2c_delay();
+  scl_low();
+  sda_high();
+  return data;
+}
+
+void EX_01::ads_write_reg(uint8_t reg, uint8_t val) {
+  i2c_start();
+  i2c_write(ADS_ADDR << 1); 
+  i2c_write(0x40 | (reg << 2)); 
+  i2c_write(val);
+  i2c_stop();
+}
+
+void EX_01::ads_start_conversion() {
+  i2c_start();
+  i2c_write(ADS_ADDR << 1);
+  i2c_write(0x08);
+  i2c_stop();
+}
+
+void EX_01::ads_reset() {
+  i2c_start();
+  i2c_write(ADS_ADDR << 1);
+  i2c_write(0x06); 
+  i2c_stop();
+  delay(10);
+}
+
+int16_t EX_01::ads_read_data_safe() {
+
+  i2c_start();
+  i2c_write(ADS_ADDR << 1); 
+  i2c_write(0x10);      
+
+  i2c_stop();
+
+  i2c_start();
+  i2c_write((ADS_ADDR << 1) | 1); 
+  uint8_t msb = i2c_read(true);   
+  uint8_t lsb = i2c_read(false);  
+  i2c_stop();
+
+  return (int16_t)((msb << 8) | lsb);
+}
+
+float EX_01::get_voltage(uint8_t mux_config) {
+
+  ads_write_reg(0x00, mux_config);
+
+  ads_start_conversion();
+
+  delay(60); 
+
+  int16_t raw = ads_read_data_safe();
+
+  return (raw * 2.048f) / 32768.0f;
+}
