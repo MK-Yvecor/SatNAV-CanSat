@@ -3,7 +3,6 @@
 #include <Adafruit_NeoPixel.h>
 #include "I2C_Sensors.h"
 #include <Adafruit_BMP280.h>
-#include <Adafruit_MPU6050.h>
 
 #define LED_PIN 12
 #define LED_COUNT 1
@@ -13,31 +12,26 @@
 
 //Second I2C interface for EX01
 // SDA = 2, SCL = 5
+// EX_01 Address 0x40
 
 using namespace I2C_Sensors;
 INA219 INA219_(INA219_ADDR, 0.05f, 2.0f);
 Adafruit_BMP280 _BMP280;
 EX_01 EX_01_(0x40, 2, 5, 10);
-Adafruit_MPU6050 MPU;
+MPU6050 MPU;
 Adafruit_NeoPixel WS2812B(LED_COUNT, LED_PIN, NEO_GRBW + NEO_KHZ800);
 
 float PSRAM_SIZE;
 float FLASH_SIZE;
 
 float voltage;
-float ER;
-float EG;
-float EB;
 float presssure;
 float altitude;
 float temperature;
 
-float GX;
-float GY;
-float GZ;
-float AX;
-float AY;
-float AZ;
+EX_01::EX_Data _EX_Data;
+MPU6050::GyroData GyroData;
+MPU6050::AccelData AccelData;
 
 void setup() {
   // put your setup code here, to run once:
@@ -60,7 +54,7 @@ void setup() {
     Adafruit_BMP280::STANDBY_MS_500
   );
 
-  if (!MPU.begin(0x68)) {   // 0x68 jeśli AD0=GND, 0x69 jeśli AD0=VCC
+  if (!MPU.ConfigureSensor()) {   // 0x68 I2C Address
     Serial.println("MPU6050 not found!");
     while (1);
   }
@@ -87,21 +81,12 @@ void loop() {
   WS2812B.setPixelColor(0,0,0,50);
   WS2812B.show();
 
-  sensors_event_t a,g,t;
+  MPU.ReadDataIMU();
+  AccelData = MPU.GetAccelData();
+  GyroData = MPU.GetGyroData();
 
-  MPU.getEvent(&a,&g,&t);
+  _EX_Data = EX_01_.get_EX_01_Data();
 
-  AX = a.acceleration.x;
-  AY = a.acceleration.y;
-  AZ = a.acceleration.z;
-
-  GX = g.gyro.x;
-  GY = g.gyro.y;
-  GZ = g.gyro.z;
-  
-  ER = EX_01_.get_voltage(0x80);
-  EG = EX_01_.get_voltage(0x90);
-  EB = EX_01_.get_voltage(0xA0);
   voltage = INA219_.readBusVoltage();
   temperature = _BMP280.readTemperature();
   presssure = _BMP280.readPressure() / 100;
@@ -123,35 +108,35 @@ void loop() {
   Serial.println(voltage);
 
   Serial.print("ER");
-  Serial.println(ER);
+  Serial.println(_EX_Data.RED_Channel);
 
   Serial.print("EG");
-  Serial.println(EG);
+  Serial.println(_EX_Data.GREEN_Channel);
 
   Serial.print("EB");
-  Serial.println(EB);
+  Serial.println(_EX_Data.BLUE_Channel);
 
   delay(20);
 
   Serial.print("GX");
-  Serial.println(GX);
+  Serial.println(GyroData.GX);
 
   Serial.print("GY");
-  Serial.println(GY);
+  Serial.println(GyroData.GY);
 
   Serial.print("GZ");
-  Serial.println(GZ);
+  Serial.println(GyroData.GZ);
 
   delay(20);
 
   Serial.print("AX");
-  Serial.println(AX);
+  Serial.println(AccelData.AX);
 
   Serial.print("AY");
-  Serial.println(AY);
+  Serial.println(AccelData.AY);
 
    Serial.print("AZ");
-   Serial.println(AZ);
+   Serial.println(AccelData.AZ);
 
   delay(250);
   WS2812B.setPixelColor(0,0,0,0);

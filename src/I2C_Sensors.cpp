@@ -1,4 +1,5 @@
 #include "I2C_Sensors.h"
+#include <Adafruit_MPU6050.h>
 
 using namespace I2C_Sensors;
 
@@ -209,4 +210,54 @@ float EX_01::get_voltage(uint8_t mux_config) {
   int16_t raw = ads_read_data_safe();
 
   return (raw * 2.048f) / 32768.0f;
+}
+
+
+EX_01::EX_Data EX_01::get_EX_01_Data() {
+  readData.RED_Channel = get_voltage(0x80);
+  readData.GREEN_Channel = get_voltage(0x90);
+  readData.BLUE_Channel = get_voltage(0xA0);
+
+  return readData;
+}
+
+/*
+
+  MPU 6050
+
+*/
+
+
+bool::MPU6050::ConfigureSensor() {
+  if(!AF_MPU6050.begin(0x68)) {
+    return false;
+  }
+
+  AF_MPU6050.setAccelerometerRange(MPU6050_RANGE_16_G);
+  AF_MPU6050.setGyroRange(MPU6050_RANGE_500_DEG);
+
+  return true;
+
+}
+
+void::MPU6050::ReadDataIMU() {
+
+  AF_MPU6050.getEvent(&a,&g,&t);
+
+  readDataAccel.AX = a.acceleration.x;
+  readDataAccel.AY = a.acceleration.y;
+  readDataAccel.AZ = a.acceleration.z;
+
+  readDataGyro.GX = g.gyro.x;
+  readDataGyro.GY = g.gyro.y;
+  readDataGyro.GZ = g.gyro.z;
+
+}
+
+MPU6050::GyroData MPU6050::GetGyroData(){
+  return readDataGyro;
+}
+
+MPU6050::AccelData MPU6050::GetAccelData(){
+  return readDataAccel;
 }

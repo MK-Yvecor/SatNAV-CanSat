@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_BMP280.h>
+#include <Adafruit_MPU6050.h>
 
 //list of default addresses of I2C devices used in SatNAV. If the addresses are diffrent you can specify a custom address in class constructor
 
@@ -40,9 +41,9 @@ namespace I2C_Sensors{
 
 
 class EX_01{
-
     
     public: 
+    //ADC Address, SDA, SCL, Delay
     EX_01(uint8_t _ADS_ADDR, uint8_t _SDA, uint8_t _SCL, uint8_t _I2C_DELAY_US) {
 
         ADS_ADDR = _ADS_ADDR;
@@ -55,7 +56,14 @@ class EX_01{
     void ads_write_reg(uint8_t reg, uint8_t val);
     void ads_reset();
     
+    typedef struct EX_Data{
+        float RED_Channel;
+        float GREEN_Channel;
+        float BLUE_Channel;
+    };
     
+    EX_Data get_EX_01_Data();
+
     private:
     uint8_t ADS_ADDR;
     uint8_t SDA;
@@ -81,7 +89,46 @@ class EX_01{
     
     
     int16_t ads_read_data_safe();
+
+    EX_Data readData;
     
+};
+
+
+class MPU6050 {
+
+    public: 
+    // Initializes MPU6050 sensor and sets its range
+    bool ConfigureSensor();
+    
+    typedef struct GyroData{
+        float GX;
+        float GY;
+        float GZ;
+    };
+    
+    typedef struct AccelData {
+        float AX;
+        float AY;
+        float AZ;  
+    };
+    
+    // Reads Accel and Gyro data. To get data from gyro and/or accel you need to invoke GetAccelData() and/or GetGyroData() after calling this mothod.
+    void ReadDataIMU();
+
+    // Returns GyroData
+    GyroData GetGyroData();
+
+    // Returns AccelData
+    AccelData GetAccelData();
+    
+    private:
+    Adafruit_MPU6050 AF_MPU6050;
+    sensors_event_t a,g,t;
+
+    AccelData readDataAccel;
+    GyroData readDataGyro;
+
 };
 
 }
