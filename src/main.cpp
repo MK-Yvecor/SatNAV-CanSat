@@ -206,7 +206,7 @@ void loop() {
   static unsigned long lastCheck = 0;
   if (millis() - lastCheck > 5000) {
     if (gps.charsProcessed() < 10) {
-      Serial.println("BŁĄD: Serial1 żyje, ale nie widzę ramek NMEA. Sprawdź RX/TX!");
+      Serial.println("NMEA frame error");
     }
     lastCheck = millis();
   }
