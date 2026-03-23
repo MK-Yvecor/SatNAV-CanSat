@@ -5,6 +5,7 @@
 #include <Adafruit_BMP280.h>
 #include <RadioLib.h>
 #include <SPI.h>
+#include <TinyGPS++.h>
 
 #define LED_PIN 12
 #define LED_COUNT 1
@@ -16,6 +17,9 @@
 #define SCK 36
 #define MISO 34
 #define MOSI 35
+
+const int rxPin = 13; // TX z L86
+const int txPin = 14; // RX z L86
 
 // I2C Pins
 // SDA = 18, SCL = 17 
@@ -34,6 +38,7 @@ Adafruit_BMP280 _BMP280;
 EX_01 EX_01_(0x40, 2, 5, 10);
 MPU6050 MPU;
 Adafruit_NeoPixel WS2812B(LED_COUNT, LED_PIN, NEO_GRBW + NEO_KHZ800);
+TinyGPSPlus gps;
 
 float PSRAM_SIZE;
 float FLASH_SIZE;
@@ -58,9 +63,10 @@ void setup() {
   pinMode(2, INPUT_PULLUP);
   pinMode(5, INPUT_PULLUP);
 
+  Serial1.begin(9600, SERIAL_8N1, rxPin, txPin);
   WS2812B.begin();
   
-  /*if(!_BMP280.begin(0x76)){
+  if(!_BMP280.begin(0x76)){
     Serial.println("Failed to initialize BMP280");
     WS2812B.setPixelColor(50,0,0,0);
     WS2812B.show();
@@ -101,7 +107,7 @@ void setup() {
   }
   EX_01_.ads_reset();
   EX_01_.ads_write_reg(0x01, 0x00);
-  */
+  
   
   int state = radio.begin(433.0, 125.0, 9, 7, 0x12, 17);
 
@@ -126,13 +132,44 @@ void setup() {
   }
 }
 
+
+void wyswietlStatystyki() {
+  Serial.print(F("Lokalizacja: ")); 
+  if (gps.location.isValid()) {
+    Serial.print(gps.location.lat(), 6);
+    Serial.print(F(","));
+    Serial.print(gps.location.lng(), 6);
+  } else {
+    Serial.print(F("INVALID"));
+  }
+
+  Serial.print(F("  Satelity: "));
+  Serial.println(gps.satellites.value());
+}
+
+template <typename T> char GetType();
+template<> char GetType<int>() { return 'i'; }
+template<> char GetType<double>() { return 'd'; }
+
+template <typename input>
+void UartSend(input value, char type[2]){
+  char dataType = GetType<decltype(value)>();
+  byte* b = (byte*)(void*)&value;
+  Serial.write(0xFF);
+  Serial.write(char(type), 2);
+  Serial.write(dataType);
+  Serial.write(byte(sizeof(value)));
+  Serial.write(b, sizeof(value));
+  Serial.write(0xF0);
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
   delay(250);
   WS2812B.setPixelColor(0,0,0,50);
   WS2812B.show();
 
-  MPU.ReadDataIMU();
+ MPU.ReadDataIMU();
   AccelData = MPU.GetAccelData();
   GyroData = MPU.GetGyroData();
 
@@ -143,7 +180,7 @@ void loop() {
   presssure = _BMP280.readPressure() / 100;
   altitude = _BMP280.readAltitude();
 
-  int state = radio.transmit("HELLO FROM LORA");
+ int state = radio.transmit("HELLO FROM LORA");
 
   if(state == RADIOLIB_ERR_NONE){
     Serial.println("TX Success");
@@ -154,53 +191,27 @@ void loop() {
   }
 
   delay(1000);
-  /*
 
-  Serial.print("TE");
-  Serial.println(temperature);
+  while (Serial1.available() > 0) {
+    char c = Serial1.read();
+    // DEBUG: Odkomentuj linię poniżej, jeśli chcesz widzieć surowe dane NMEA
+    // Serial.print(c); 
+    
+    if (gps.encode(c)) {
+      wyswietlStatystyki();
+    }
+  }
 
-  Serial.print("PR");
-  Serial.println(presssure);
+
+  static unsigned long lastCheck = 0;
+  if (millis() - lastCheck > 5000) {
+    if (gps.charsProcessed() < 10) {
+      Serial.println("BŁĄD: Serial1 żyje, ale nie widzę ramek NMEA. Sprawdź RX/TX!");
+    }
+    lastCheck = millis();
+  }
+
   
-  Serial.print("AL");
-  Serial.println(altitude);
-
-  delay(20);
-
-  Serial.print("VO");
-  Serial.println(voltage);
-
-  Serial.print("ER");
-  Serial.println(_EX_Data.RED_Channel);
-
-  Serial.print("EG");
-  Serial.println(_EX_Data.GREEN_Channel);
-
-  Serial.print("EB");
-  Serial.println(_EX_Data.BLUE_Channel);
-
-  delay(20);
-
-  Serial.print("GX");
-  Serial.println(GyroData.GX);
-
-  Serial.print("GY");
-  Serial.println(GyroData.GY);
-
-  Serial.print("GZ");
-  Serial.println(GyroData.GZ);
-
-  delay(20);
-
-  Serial.print("AX");
-  Serial.println(AccelData.AX);
-
-  Serial.print("AY");
-  Serial.println(AccelData.AY);
-
-   Serial.print("AZ");
-   Serial.println(AccelData.AZ);
-   */
   delay(250);
   WS2812B.setPixelColor(0,0,0,0);
   WS2812B.show();
