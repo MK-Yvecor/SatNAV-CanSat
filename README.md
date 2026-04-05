@@ -17,6 +17,10 @@ Specification of flight controller:
 Current version of code:
 - 🧷 Performs a test of PSRAM and FLASH initialization,
 - 📚 Blinks the status diode,
-- ⚡ Reads data from INA219.
+- ⚡ Reads data from INA219,
+- 🏃 Reads data from MPU6050 (Gyro, accel),
+- 📡 Transmits data via LoRa & UART
+- 💾 Saves data to microSD card
+- ✈️ Performs a full flight sequence
 
 🔧 (Code documentation - work in progress) 🔧
