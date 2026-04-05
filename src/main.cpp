@@ -6,6 +6,8 @@
 #include <RadioLib.h>
 #include <SPI.h>
 #include <TinyGPS++.h>
+#include "UART.h"
+#include "Commands.h"
 
 #define LED_PIN 12
 #define LED_COUNT 1
@@ -43,35 +45,54 @@ TinyGPSPlus gps;
 float PSRAM_SIZE;
 float FLASH_SIZE;
 
-float voltage;
-float presssure;
-float altitude;
-float temperature;
+double voltage;
+double presssure;
+double altitude;
+double temperature;
 
 EX_01::EX_Data _EX_Data;
 MPU6050::GyroData GyroData;
 MPU6050::AccelData AccelData;
+
+Commands comm;
+UARTReader UR;
+UARTSender US;
+
+
+volatile bool transmitting = false;
+
+byte buffer_LoRa[1024];
+
+
+void OnTransmitDone(){
+  transmitting = false;
+}
+
 
 void setup() {
   delay(500);
 
   Serial.begin(115200);
   Wire.begin(18,17);
+  WS2812B.begin();
+  WS2812B.setPixelColor(0,0,10,0);
+  WS2812B.show();
+  delay(1000);
   
   spiLoRa.begin(SCK, MISO, MOSI, L_CS);
 
-  pinMode(2, INPUT_PULLUP);
-  pinMode(5, INPUT_PULLUP);
+  //pinMode(2, INPUT_PULLUP);
+  //pinMode(5, INPUT_PULLUP);
 
   Serial1.begin(9600, SERIAL_8N1, rxPin, txPin);
-  WS2812B.begin();
+
+  US.AllocateMemoryForBuffer();
   
-  if(!_BMP280.begin(0x76)){
+ if(!_BMP280.begin(0x76)){
     Serial.println("Failed to initialize BMP280");
     WS2812B.setPixelColor(50,0,0,0);
     WS2812B.show();
     delay(3000);
-    return;
   }
   
   _BMP280.setSampling(
@@ -87,7 +108,6 @@ void setup() {
     WS2812B.setPixelColor(50,0,0,0);
     WS2812B.show();
     delay(3000);
-    return;
   }
   
   if(!INA219_.Init()){
@@ -95,7 +115,6 @@ void setup() {
     WS2812B.setPixelColor(50,0,0,0);
     WS2812B.show();
     delay(3000);
-    return;
   }
   
   if(!INA219_.ConfigureSensor()){
@@ -103,13 +122,13 @@ void setup() {
       WS2812B.show();
       Serial.println("Failed to configure INA219");
       delay(3000);
-      return;
+      //return;
   }
-  EX_01_.ads_reset();
-  EX_01_.ads_write_reg(0x01, 0x00);
+ // EX_01_.ads_reset();
+  //EX_01_.ads_write_reg(0x01, 0x00);
   
   
-  int state = radio.begin(433.0, 125.0, 9, 7, 0x12, 17);
+  int state = radio.begin(433.96, 125.0, 9, 7, 0x12, 17);
 
   if(state != RADIOLIB_ERR_NONE){
     WS2812B.setPixelColor(50,0,0,0);
@@ -126,10 +145,12 @@ void setup() {
       WS2812B.setPixelColor(0,50,50,0);
       WS2812B.show();
       delay(250);
-      WS2812B.setPixelColor(0,0,00,0);
+      WS2812B.setPixelColor(0,0,0,0);
       WS2812B.show();
     }
   }
+
+  radio.setDio0Action(OnTransmitDone, RISING);
 }
 
 
@@ -147,55 +168,62 @@ void wyswietlStatystyki() {
   Serial.println(gps.satellites.value());
 }
 
-template <typename T> char GetType();
-template<> char GetType<int>() { return 'i'; }
-template<> char GetType<double>() { return 'd'; }
-
-template <typename input>
-void UartSend(input value, char type[2]){
-  char dataType = GetType<decltype(value)>();
-  byte* b = (byte*)(void*)&value;
-  Serial.write(0xFF);
-  Serial.write(char(type), 2);
-  Serial.write(dataType);
-  Serial.write(byte(sizeof(value)));
-  Serial.write(b, sizeof(value));
-  Serial.write(0xF0);
-}
-
 void loop() {
   // put your main code here, to run repeatedly:
-  delay(250);
   WS2812B.setPixelColor(0,0,0,50);
   WS2812B.show();
 
- MPU.ReadDataIMU();
+  MPU.ReadDataIMU();
   AccelData = MPU.GetAccelData();
   GyroData = MPU.GetGyroData();
 
-  _EX_Data = EX_01_.get_EX_01_Data();
+  /*_EX_Data = EX_01_.get_EX_01_Data();
 
+  Serial.print("R: ");
+  Serial.println(_EX_Data.RED_Channel);
+  Serial.print("G: ");
+  Serial.println(_EX_Data.GREEN_Channel);
+  Serial.print("B: ");
+  Serial.println(_EX_Data.BLUE_Channel);*/
+  
   voltage = INA219_.readBusVoltage();
   temperature = _BMP280.readTemperature();
   presssure = _BMP280.readPressure() / 100;
   altitude = _BMP280.readAltitude();
 
- int state = radio.transmit("HELLO FROM LORA");
+  US.WriteToBuffer(altitude, (char*)"AL");
+  US.WriteToBuffer(temperature, (char*)"TE");
+  US.WriteToBuffer(presssure, (char*)"PR");
+  US.WriteToBuffer(voltage, (char*)"VO");
+  US.WriteToBuffer(GyroData.GX, (char*)"GX");
+  US.WriteToBuffer(GyroData.GY, (char*)"GY");
+  US.WriteToBuffer(GyroData.GZ, (char*)"GZ");
+  US.WriteToBuffer(AccelData.AX, (char*)"AX");
+  US.WriteToBuffer(AccelData.AY, (char*)"AY");
+  US.WriteToBuffer(AccelData.AZ, (char*)"AZ");
 
-  if(state == RADIOLIB_ERR_NONE){
-    Serial.println("TX Success");
+  Serial.println(millis());
+
+  if(!transmitting){
+    memcpy(buffer_LoRa, US.GetBuffer(), US.GetBufferSize());
+    int state = radio.startTransmit(buffer_LoRa, US.GetBufferSize());
+    if(state == RADIOLIB_ERR_NONE){
+      transmitting = true;
+      Serial.println("TX Success");
+    }
+    else{
+      Serial.print("Failed to TX, ERR CODE: ");
+      Serial.println(state);
+    }
   }
-  else{
-    Serial.print("Failed to TX, ERR CODE: ");
-    Serial.println(state);
-  }
 
-  delay(1000);
+  Serial.println(millis());
+  US.SendBuffer();
 
-  while (Serial1.available() > 0) {
+
+
+ /* while (Serial1.available() > 0) {
     char c = Serial1.read();
-    // DEBUG: Odkomentuj linię poniżej, jeśli chcesz widzieć surowe dane NMEA
-    // Serial.print(c); 
     
     if (gps.encode(c)) {
       wyswietlStatystyki();
@@ -209,11 +237,11 @@ void loop() {
       Serial.println("NMEA frame error");
     }
     lastCheck = millis();
-  }
-
+  }*/
   
-  delay(250);
   WS2812B.setPixelColor(0,0,0,0);
   WS2812B.show();
   
+  
+
 }

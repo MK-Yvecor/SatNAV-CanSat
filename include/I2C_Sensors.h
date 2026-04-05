@@ -15,7 +15,7 @@ namespace I2C_Sensors{
 
     public:
     // INA219 class constructor
-    INA219(uint8_t addr_, float ResitorValue, float MaxExpectedCurrent);
+    INA219(uint8_t addr_, double ResitorValue, double MaxExpectedCurrent);
     //Initialization check
     bool Init();
     //Writes all needed values to the configuration register
@@ -23,19 +23,19 @@ namespace I2C_Sensors{
     // Universal function to read 2 bytes of incoming data from the sensor
     uint16_t readByte(uint8_t regAddress);
     uint16_t writeByte(uint8_t regAddress);
-    float readShuntVoltage();
-    float readBusVoltage();
-    float readCurrent();
-    float readPower();
+    double readShuntVoltage();
+    double readBusVoltage();
+    double readCurrent();
+    double readPower();
 
     private:
     uint8_t INA_addr;
     //Expressed in Ohms
-    float ResistorValue_;
+    double ResistorValue_;
     //Expressed in Amps
-    float MaxExpectedCurrent_;
+    double MaxExpectedCurrent_;
     //Current LSB value
-    float Current_LSB;
+    double Current_LSB;
 };
 
 
@@ -102,15 +102,15 @@ class MPU6050 {
     bool ConfigureSensor();
     
     typedef struct GyroData{
-        float GX;
-        float GY;
-        float GZ;
+        double GX;
+        double GY;
+        double GZ;
     };
     
     typedef struct AccelData {
-        float AX;
-        float AY;
-        float AZ;  
+        double AX;
+        double AY;
+        double AZ;  
     };
     
     // Reads Accel and Gyro data. To get data from gyro and/or accel you need to invoke GetAccelData() and/or GetGyroData() after calling this mothod.

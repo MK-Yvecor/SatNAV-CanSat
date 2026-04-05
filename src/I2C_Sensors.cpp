@@ -4,7 +4,7 @@
 using namespace I2C_Sensors;
 
 // INA219 class constructor
-INA219::INA219(uint8_t addr, float ResitorValue, float MaxExpectedCurrent){
+INA219::INA219(uint8_t addr, double ResitorValue, double MaxExpectedCurrent){
     INA_addr = addr;
     ResistorValue_ = ResitorValue;
     MaxExpectedCurrent_ = MaxExpectedCurrent;
@@ -78,26 +78,26 @@ All values after conversion are expressed in SI units: [V], [V], [A], [W].
 */
 
 //result in V
-float INA219::readShuntVoltage(){
-    float result = (float)(int16_t)readByte(0x01) * 0.00001f;
+double INA219::readShuntVoltage(){
+    double result = (double)(int16_t)readByte(0x01) * 0.00001f;
     return result;
 }
 
 //Result in volts
-float INA219::readBusVoltage(){
-    float result = (float)(readByte(0x02) >> 3) * 0.004f;
+double INA219::readBusVoltage(){
+    double result = (double)(readByte(0x02) >> 3) * 0.004f;
     return result;
 }
 
 //result in W
-float INA219::readPower(){
-    float result = (float)readByte(0x03) * Current_LSB * 20.0f;
+double INA219::readPower(){
+    double result = (double)readByte(0x03) * Current_LSB * 20.0f;
     return result;
 }
 
 //Result in A
-float INA219::readCurrent(){
-    float result = (float)(int16_t)readByte(0x04) * Current_LSB;
+double INA219::readCurrent(){
+    double result = (double)(int16_t)readByte(0x04) * Current_LSB;
     return result;
 }
 

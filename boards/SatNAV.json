@@ -26,7 +26,7 @@
     ],
     "id": "SatNAV",
     "name": "SatNAV",
-    "upload":
+    "upload":   
     {
         "flash_size": "16MB",
         "maximum_size": 16777216,
